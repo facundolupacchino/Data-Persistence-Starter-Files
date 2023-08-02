@@ -14,6 +14,7 @@ public class MainManager : MonoBehaviour
     public Rigidbody Ball;
 
     public Text ScoreText;
+    public Text bestScore;
     public GameObject GameOverText;
 
     private bool m_Started = false;
@@ -40,6 +41,12 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+        SaveData highScoreData = LoadPlayerScore();
+        if(highScoreData != null)
+        {
+            bestScore.text = "Best Score : " + highScoreData.playerName + " : " + highScoreData.highScore;
+        }
+
     }
 
     private void Update()
@@ -78,6 +85,66 @@ public class MainManager : MonoBehaviour
 
         GameOverText.SetActive(true);
 
+        if (isNewHighScore())
+        {
+            SavePlayerScore();
+        }
+    }
+
+    [Serializable]
+    public class SaveData
+    {
+        public int highScore;
+        public string playerName;
+    }
+
+    public bool isNewHighScore()
+    {
+        SaveData currentHighScore = LoadPlayerScore();
+
+        if(currentHighScore != null)
+        {
+            if(m_Points > currentHighScore.highScore)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    public void SavePlayerScore()
+    {
+        SaveData data = new SaveData();
+        data.highScore = m_Points;
+        data.playerName = MenuManager.instance.playerName; 
+
+        string json = JsonUtility.ToJson(data);
+
+        File.WriteAllText(Application.persistentDataPath + "/scorefile.json", json);
+    }
+
+    public SaveData LoadPlayerScore()
+    {
+        string path = Application.persistentDataPath + "/scorefile.json";
+        if(File.Exists(path))
+        {
+            string json = File.ReadAllText(path);
+            SaveData data = JsonUtility.FromJson<SaveData>(json);
+
+            return data;
+
+        }
+        else
+        {
+            return null;
+        }
     }
 
     
